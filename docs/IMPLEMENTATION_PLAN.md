@@ -2,7 +2,7 @@
 
 > **Working name:** ZapTV (rename anytime)
 > **Platform:** Android TV / Google TV (and Fire TV running Fire OS)
-> **Distribution:** Open source on GitHub, **private use**. Sideloaded APK, no Play Store.
+> **Distribution:** Open source on GitHub under the Apache License 2.0. Sideloaded APK, no Play Store.
 > **Goal:** Free live TV channels (Malayalam first, then all of India and the world) with a **cable TV feel**: switch on the app, a channel is already playing, press **CH+ / CH−** and the next channel starts almost instantly.
 > **Plan date:** 26 Oct 2026
 
@@ -17,7 +17,7 @@
 | **2. Lineup + browsing** | 🟡 Started. Channel list with groups and favourites, Options panel and daily refresh are done. Still to do: multiple playlists, hide/reorder, custom numbers. |
 | 3–6 | Not started. Next: preloading neighbour channels, network-loss recovery, EPG. |
 
-UI/UX spec: [UI_UX_DESIGN.md](UI_UX_DESIGN.md). Build and install steps: [README.md](README.md).
+UI/UX spec: [UI_UX_DESIGN.md](UI_UX_DESIGN.md). Build and install steps: [README.md](../README.md).
 
 ---
 
@@ -116,7 +116,7 @@ No store, no store review. The app is built for your own TVs and published on Gi
 2. **Your personal channel list** lives in a private file (`my-channels.m3u`) on your TV, or in a **private** GitHub repo/Gist the app loads by URL. It never goes in the public repo.
 3. **YouTube-only channels** (e.g. Kappa after the shutdown) open in the YouTube TV app through a deep link. That is simpler and more reliable than extracting stream URLs.
 4. **Public repo hygiene:** commit code, presets that are only URLs, and test streams from public test sources (e.g. Apple/Mux sample HLS). No pay-channel links, no API keys, no personal playlists.
-5. **License:** **GPL-3.0** (keeps forks open) or **Apache-2.0** (most permissive). See section 19.
+5. **License:** **Apache-2.0** (decided Nov 2026): anyone may use, modify and redistribute the code, including in closed-source apps. See [LICENSE](../LICENSE).
 
 ### Recommended Malayalam starter lineup (from the iptv-org Malayalam list)
 News: 24 News, Asianet News, Manorama News, Mathrubhumi News, Kairali News, Media One, Reporter TV, News18 Kerala, Janam TV.
@@ -683,7 +683,7 @@ Estimate for **one developer**, full-time. Double it for part-time.
 ## 19. Decisions you need to make
 
 1. **App name**: "ZapTV" is a placeholder.
-2. **License**: **GPL-3.0** (forks must stay open source; recommended for a community IPTV player) or **Apache-2.0** (anyone can reuse, even closed-source).
+2. ~~**License**~~ ✅ Decided: **Apache-2.0** (anyone can reuse, even closed-source).
 3. **Languages**: Malayalam-first (recommended), then Tamil/Hindi/English?
 4. **Default zap direction**: Up = next channel (TiviMate style) or Up = previous? (Configurable either way; pick the default.)
 5. **Phone app too?** If yes, keep `leanback required="false"` and plan a phone UI later.

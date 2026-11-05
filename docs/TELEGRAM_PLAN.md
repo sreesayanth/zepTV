@@ -48,10 +48,8 @@ ZapTV's promise is "switch on, a channel is playing, ▲/▼ zaps". The Telegram
 5. **Sign in with a QR code** (`requestQrCodeAuthentication`): on the phone, Telegram → Settings → Devices → Link Desktop Device, scan the TV. No typing on the remote. Two-step password: a short on-screen-keyboard step (reuse the Search keyboard, §3.10).
 
 ### Licence note (important)
-TMPlayer is **GPL-3.0-or-later**. ZapTV's licence isn't chosen yet (the main plan recommends GPL-3.0).
-- If ZapTV goes **GPL-3.0**, you may reuse TMPlayer code with credit.
-- Otherwise write it **clean room** from the TDLib docs (as TMPlayer itself did for its `TdDataSource`) and only use TMPlayer as a reference for behaviour.
-Decide this before writing code (§9).
+TMPlayer is **GPL-3.0-or-later**; ZapTV is **Apache-2.0**. The two can't share code, so ZapTV's Telegram module is a **clean-room** implementation written from the public TDLib docs. TMPlayer was used only as a reference for *behaviour* (what the app should do), never for code.
+- **Contributors:** don't copy, translate or paraphrase code from TMPlayer or any other GPL project into this repo.
 
 ### Credentials
 Each build needs your own free `api_id` / `api_hash` from [my.telegram.org](https://my.telegram.org). Put them in `local.properties` (already git-ignored) → `BuildConfig`. Never commit them. With none present the build still works; the Settings row just says "Not set up in this build".
@@ -85,7 +83,7 @@ app/               ~    Top-level destination switch (Live | Library); BuildConf
 
 ## 4. UI / UX design
 
-> Full spec: [UI_UX_DESIGN.md §6 (TV) and §7 (phone)](UI_UX_DESIGN.md). Design canvas: https://claude.ai/artifact/H3TkHfg3ctWRGNj1r4tuPT
+> Full spec: [UI_UX_DESIGN.md §6 (TV) and §7 (phone)](UI_UX_DESIGN.md).
 
 Everything follows UI_UX_DESIGN.md (tokens, type, 38/46 dp rows, focus, motion). New screens only.
 
@@ -267,7 +265,7 @@ Add an Options row **"Open TMPlayer"** that launches TMPlayer with an intent if 
 
 ## 9. Decisions you need to make
 
-1. **Licence:** GPL-3.0 (reuse TMPlayer code with credit) or clean-room implementation?
+1. ~~**Licence**~~ ✅ Decided: clean-room implementation; ZapTV is Apache-2.0.
 2. **Default:** keep *Movies & Series* **Off** by default (recommended), or On?
 3. **Posters:** Telegram thumbnails only (no extra service), or also TMDB (needs a free API key)?
 4. **APK:** one APK with ABI splits (recommended), or also a `lite` live-only build?
