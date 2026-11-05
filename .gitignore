@@ -1,0 +1,23 @@
+# Gradle / Android Studio
+.gradle/
+build/
+local.properties
+.idea/
+*.iml
+.kotlin/
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Signing keys and secrets: never commit these
+*.jks
+*.keystore
+keystore.properties
+secrets.properties
+
+# Personal channel lists stay private (see IMPLEMENTATION_PLAN.md, section 3)
+my-channels.m3u
+*.private.m3u
+
+# Built APKs copied for sideloading
+dist/

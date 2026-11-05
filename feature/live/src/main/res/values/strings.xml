@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Banner -->
+    <string name="hint_channels">Channels</string>
+    <string name="hint_channel_list">Channel list</string>
+    <string name="hint_options">Options</string>
+    <string name="hint_previous_channel">Previous channel</string>
+    <string name="live">Live</string>
+    <string name="hd">HD</string>
+    <string name="sources_count">%1$d sources</string>
+    <string name="one_source">1 source</string>
+
+    <!-- Loading and errors -->
+    <string name="loading_channel">Loading · %1$d %2$s</string>
+    <string name="trying_source">Trying another source (%1$d of %2$d)…</string>
+    <string name="unavailable">Unavailable</string>
+    <string name="unavailable_title">%1$s isn’t available right now</string>
+    <string name="unavailable_body">ZapTV tried every source for this channel. It will try again the next time you tune in.</string>
+    <string name="next_channel_in">Next channel in %1$d s</string>
+    <string name="change_channel">Change channel</string>
+    <string name="try_again">Try again</string>
+    <string name="loading_lineup">Loading channels…</string>
+    <string name="lineup_error_title">Couldn’t load the channel list</string>
+    <string name="lineup_error_body">Check that the TV is connected to the internet, then press OK to try again.</string>
+
+    <!-- Toasts -->
+    <string name="no_channel">No channel %1$s</string>
+    <string name="back_to">Back to %1$s</string>
+    <string name="added_favourite">Added to favourites · %1$s</string>
+    <string name="removed_favourite">Removed from favourites · %1$s</string>
+    <string name="refreshed">Channel list updated · %1$d channels</string>
+    <string name="refresh_failed">Couldn’t update the channel list. The saved list is still in use.</string>
+
+    <!-- Channel list -->
+    <string name="groups">Groups</string>
+    <string name="group_favourites">Favourites</string>
+    <string name="group_all">All channels</string>
+    <string name="watch">Watch</string>
+    <string name="hold">Hold</string>
+    <string name="favourite">Favourite</string>
+    <string name="favourites_empty_title">No favourites yet</string>
+    <string name="favourites_empty_body">Hold OK on any channel to add it here.</string>
+    <string name="now">Now</string>
+
+    <!-- Options -->
+    <string name="options">Options</string>
+    <string name="option_add_favourite">Add to favourites</string>
+    <string name="option_remove_favourite">Remove from favourites</string>
+    <string name="option_picture_size">Picture size</string>
+    <string name="aspect_fit">Fit</string>
+    <string name="aspect_fill">Fill</string>
+    <string name="aspect_zoom">Zoom</string>
+    <string name="option_up_button">Up button</string>
+    <string name="up_next">▲ = next channel</string>
+    <string name="up_previous">▲ = previous channel</string>
+    <string name="option_stats">Stats for nerds</string>
+    <string name="on">On</string>
+    <string name="off">Off</string>
+    <string name="option_reload">Update channel list</string>
+    <string name="move">Move</string>
+    <string name="select">Select</string>
+    <string name="close">Close</string>
+
+    <!-- Exit -->
+    <string name="exit_question">Exit ZapTV?</string>
+    <string name="keep_watching">Keep watching</string>
+    <string name="exit">Exit</string>
+
+    <!-- Stats -->
+    <string name="stats_line">Zap %1$s · %2$s · source %3$d of %4$d</string>
+</resources>
