@@ -23,6 +23,8 @@ data class Channel(
     val quality: String?,
     val labels: List<String>,
     val sources: List<StreamSource>,
+    /** The [PlaylistPreset] (or other playlist) this channel came from. */
+    val playlistId: String = "",
 ) {
     /** 720p and above. */
     val isHd: Boolean
@@ -88,4 +90,6 @@ data class UserSettings(
     val upIsNextChannel: Boolean = true,
     val coachSeen: Boolean = false,
     val statsVisible: Boolean = false,
+    /** Ids of the [PlaylistPreset]s to show, e.g. Malayalam and Tamil. */
+    val enabledPlaylists: Set<String> = PlaylistPresets.defaultIds,
 )

@@ -13,8 +13,24 @@ android {
         applicationId = "com.zaptv.tv"
         minSdk = 24
         targetSdk = 36
-        versionCode = 1
-        versionName = "0.1.0"
+        // The release workflow sets these so every published APK installs over the previous one.
+        versionCode = System.getenv("ZAPTV_VERSION_CODE")?.toIntOrNull() ?: 1
+        versionName = System.getenv("ZAPTV_VERSION_NAME") ?: "0.1.0"
+    }
+
+    // Release signing comes from environment variables (set by the release workflow from
+    // GitHub secrets, or exported locally). Without them, release builds use the debug key.
+    // Updates only install over an APK signed with the same key, so back up the release key.
+    val releaseKeystore = System.getenv("ZAPTV_KEYSTORE_FILE")?.let { file(it) }?.takeIf { it.exists() }
+    if (releaseKeystore != null) {
+        signingConfigs {
+            create("release") {
+                storeFile = releaseKeystore
+                storePassword = System.getenv("ZAPTV_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("ZAPTV_KEY_ALIAS")
+                keyPassword = System.getenv("ZAPTV_KEY_PASSWORD")
+            }
+        }
     }
 
     buildTypes {
@@ -22,9 +38,7 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            // Signed with the debug key until a release key is set up (see README).
-            // Updates only install over an APK signed with the same key.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName(if (releaseKeystore != null) "release" else "debug")
         }
     }
 

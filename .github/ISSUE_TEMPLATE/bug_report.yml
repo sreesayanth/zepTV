@@ -1,0 +1,61 @@
+name: Bug report
+description: Something doesn't work as expected
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! Please don't include stream links to pay-TV or pirated content, or any Telegram credentials.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you see, and what did you expect instead?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Which remote buttons did you press, in what order?
+      placeholder: |
+        1. Open ZapTV
+        2. Press ▲ three times quickly
+        3. ...
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Live TV / zapping
+        - Channel list / favourites
+        - Options / settings
+        - Playlists / channel sources
+        - Movies & Series (Telegram)
+        - Install / build
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Device
+      description: TV or box model and Android TV / Google TV version
+      placeholder: e.g. Chromecast with Google TV (HD), Android TV 12
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: ZapTV version
+      description: TV Settings → Apps → ZapTV, or the commit you built from
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or screenshots
+      description: "Optional: `adb logcat` output, a photo of the screen, or Stats for nerds."
+      render: shell

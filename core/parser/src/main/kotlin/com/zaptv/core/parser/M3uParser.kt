@@ -23,6 +23,17 @@ data class M3uEntry(
     val logo: String? get() = attributes["tvg-logo"]?.takeIf { it.isNotBlank() }
     val groupTitle: String? get() = attributes["group-title"]?.takeIf { it.isNotBlank() } ?: extGroup
     val channelNumber: Int? get() = attributes["tvg-chno"]?.trim()?.toIntOrNull()
+
+    /**
+     * The channel's country, from an iptv-org style tvg-id such as `NDTV24x7.in@SD` → `in`.
+     * Null when the tvg-id doesn't follow that pattern.
+     */
+    val countryCode: String?
+        get() {
+            val id = tvgId?.substringBefore('@') ?: return null
+            val code = id.substringAfterLast('.', missingDelimiterValue = "")
+            return code.lowercase().takeIf { it.length == 2 && it.all { c -> c in 'a'..'z' } }
+        }
 }
 
 data class M3uPlaylist(

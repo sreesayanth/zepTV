@@ -5,10 +5,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.Player
 import com.zaptv.core.data.ChannelRepository
-import com.zaptv.core.data.PlaylistPresets
 import com.zaptv.core.data.PlaylistRepository
 import com.zaptv.core.data.SettingsRepository
 import com.zaptv.core.model.Channel
+import com.zaptv.core.model.PlaylistPreset
+import com.zaptv.core.model.PlaylistPresets
 import com.zaptv.core.player.PlaybackState
 import com.zaptv.core.player.PlayerController
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -21,6 +22,8 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import javax.inject.Inject
 
 @HiltViewModel
@@ -45,11 +48,14 @@ class LiveViewModel @Inject constructor(
     private var lastBackAt = 0L
     private var lastDirection = 1
     private var stoppedByLifecycle = false
+    /** Downloads and removals of playlists run one at a time. */
+    private val lineupMutex = Mutex()
 
     init {
         viewModelScope.launch {
             combine(channelRepository.channels, channelRepository.favourites) { channels, favourites -> channels to favourites }
                 .collect { (channels, favourites) ->
+                    val playing = _state.value.current
                     _state.update {
                         it.copy(
                             channels = channels,
@@ -57,12 +63,23 @@ class LiveViewModel @Inject constructor(
                             lineupStatus = if (channels.isNotEmpty()) LineupStatus.Ready else it.lineupStatus,
                         )
                     }
-                    if (channels.isNotEmpty() && _state.value.currentKey == null) startFirstChannel(channels)
+                    when {
+                        channels.isEmpty() -> Unit
+                        _state.value.currentKey == null -> startFirstChannel(channels)
+                        // The playing channel's language was turned off, or it is now shown under another
+                        // language: keep watching the same channel if it is still there, otherwise start over.
+                        channels.none { it.key == _state.value.currentKey } -> {
+                            val same = playing?.tvgId?.let { id -> channels.firstOrNull { it.tvgId.equals(id, ignoreCase = true) } }
+                            if (same != null) tune(same.key) else startFirstChannel(channels, ignoreLast = true)
+                        }
+                    }
                 }
         }
         viewModelScope.launch {
             settingsRepository.settings.collect { s ->
-                _state.update { it.copy(upIsNextChannel = s.upIsNextChannel, statsVisible = s.statsVisible) }
+                _state.update {
+                    it.copy(upIsNextChannel = s.upIsNextChannel, statsVisible = s.statsVisible, enabledPlaylists = s.enabledPlaylists)
+                }
             }
         }
         viewModelScope.launch { playerController.state.collect(::onPlaybackChanged) }
@@ -108,6 +125,7 @@ class LiveViewModel @Inject constructor(
             Overlay.None -> onLiveAction(action)
             is Overlay.ChannelList -> onListAction(overlay, action)
             is Overlay.Options -> onOptionsAction(overlay, action)
+            is Overlay.Languages -> onLanguagesAction(overlay, action)
             is Overlay.Exit -> onExitAction(overlay, action)
         }
     }
@@ -231,6 +249,8 @@ class LiveViewModel @Inject constructor(
                     }
                     OptionItem.UpButton -> viewModelScope.launch { settingsRepository.setUpIsNextChannel(!s.upIsNextChannel) }
                     OptionItem.Stats -> viewModelScope.launch { settingsRepository.setStatsVisible(!s.statsVisible) }
+                    OptionItem.Languages ->
+                        if (action == RemoteAction.Left) close() else _state.update { it.copy(overlay = Overlay.Languages(0)) }
                     OptionItem.Reload -> {
                         close()
                         if (action != RemoteAction.Left) loadLineup(force = true)
@@ -239,6 +259,51 @@ class LiveViewModel @Inject constructor(
             }
             RemoteAction.Back, RemoteAction.Menu -> close()
             else -> Unit
+        }
+    }
+
+    private fun onLanguagesAction(overlay: Overlay.Languages, action: RemoteAction) {
+        val presets = PlaylistPresets.all
+        val backToOptions = { _state.update { it.copy(overlay = Overlay.Options(OptionItem.Languages.ordinal)) } }
+        when (action) {
+            RemoteAction.Up -> _state.update { it.copy(overlay = overlay.copy(focusedIndex = (overlay.focusedIndex - 1).coerceAtLeast(0))) }
+            RemoteAction.Down -> _state.update { it.copy(overlay = overlay.copy(focusedIndex = (overlay.focusedIndex + 1).coerceAtMost(presets.lastIndex))) }
+            RemoteAction.Ok, RemoteAction.Right -> presets.getOrNull(overlay.focusedIndex)?.let { toggleLanguage(it) }
+            RemoteAction.Left, RemoteAction.Back -> backToOptions()
+            RemoteAction.Menu -> _state.update { it.copy(overlay = Overlay.None) }
+            else -> Unit
+        }
+    }
+
+    /** Turns a language on (downloads its channels) or off (removes them). At least one stays on. */
+    private fun toggleLanguage(preset: PlaylistPreset) {
+        val s = _state.value
+        if (preset.id in s.loadingPlaylists) return
+        val turningOn = preset.id !in s.enabledPlaylists
+        if (!turningOn && s.enabledPlaylists.size <= 1) {
+            showToast(ToastMessage.KeepOneLanguage)
+            return
+        }
+        val enabled = if (turningOn) s.enabledPlaylists + preset.id else s.enabledPlaylists - preset.id
+        _state.update { it.copy(enabledPlaylists = enabled) }
+        viewModelScope.launch {
+            settingsRepository.setEnabledPlaylists(enabled)
+            lineupMutex.withLock {
+                if (!turningOn) {
+                    playlistRepository.remove(preset.id)
+                    return@withLock
+                }
+                _state.update { it.copy(loadingPlaylists = it.loadingPlaylists + preset.id) }
+                playlistRepository.refresh(preset)
+                    .onSuccess { count -> showToast(ToastMessage.LanguageAdded(preset.name, count)) }
+                    .onFailure {
+                        // Don't leave a language "on" that has no channels; the user can try again.
+                        val current = settingsRepository.settings.first().enabledPlaylists
+                        settingsRepository.setEnabledPlaylists(current - preset.id)
+                        showToast(ToastMessage.LanguageFailed(preset.name))
+                    }
+                _state.update { it.copy(loadingPlaylists = it.loadingPlaylists - preset.id) }
+            }
         }
     }
 
@@ -321,9 +386,10 @@ class LiveViewModel @Inject constructor(
         tune(previous.key)
     }
 
-    private suspend fun startFirstChannel(channels: List<Channel>) {
+    private suspend fun startFirstChannel(channels: List<Channel>, ignoreLast: Boolean = false) {
         val settings = settingsRepository.settings.first()
-        val start = channels.firstOrNull { it.key == settings.lastChannelKey } ?: channels.first()
+        val last = if (ignoreLast) null else channels.firstOrNull { it.key == settings.lastChannelKey }
+        val start = last ?: channels.first()
         tune(start.key, bannerMillis = FIRST_BANNER_MS)
         if (!settings.coachSeen) {
             showToast(ToastMessage.Coach, COACH_MS)
@@ -335,7 +401,7 @@ class LiveViewModel @Inject constructor(
 
     private fun digit(value: Char) {
         var digits = _state.value.digits
-        if (digits.length >= 3) digits = ""
+        if (digits.length >= MAX_DIGITS) digits = ""
         digits += value
         _state.update { it.copy(digits = digits) }
         digitJob?.cancel()
@@ -432,18 +498,36 @@ class LiveViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Downloads every turned-on language that is missing or more than a day old (all of them when
+     * [force]), one after another in number order, so Malayalam is ready and playing first.
+     * Languages that were turned off are removed.
+     */
     private fun loadLineup(force: Boolean) {
         viewModelScope.launch {
-            val preset = PlaylistPresets.Default
-            val hasChannels = playlistRepository.channelCount() > 0
-            if (!force && hasChannels && !playlistRepository.isStale(preset)) return@launch
-            if (!hasChannels) _state.update { it.copy(lineupStatus = LineupStatus.Loading) }
-            playlistRepository.refresh(preset)
-                .onSuccess { count -> if (force) showToast(ToastMessage.Refreshed(count)) }
-                .onFailure {
-                    if (!hasChannels) _state.update { it.copy(lineupStatus = LineupStatus.Error) }
-                    else if (force) showToast(ToastMessage.RefreshFailed)
+            lineupMutex.withLock {
+                val enabled = settingsRepository.settings.first().enabledPlaylists
+                val presets = PlaylistPresets.all.filter { it.id in enabled }.ifEmpty { listOf(PlaylistPresets.Malayalam) }
+                val wanted = presets.mapTo(HashSet()) { it.id }
+                for (id in playlistRepository.storedIds() - wanted) playlistRepository.remove(id)
+
+                val hadChannels = playlistRepository.channelCount() > 0
+                if (!hadChannels) _state.update { it.copy(lineupStatus = LineupStatus.Loading) }
+                var failed = false
+                for (preset in presets) {
+                    if (!force && !playlistRepository.isStale(preset)) continue
+                    _state.update { it.copy(loadingPlaylists = it.loadingPlaylists + preset.id) }
+                    playlistRepository.refresh(preset).onFailure { failed = true }
+                    _state.update { it.copy(loadingPlaylists = it.loadingPlaylists - preset.id) }
                 }
+
+                val hasChannels = playlistRepository.channelCount() > 0
+                when {
+                    !hasChannels -> _state.update { it.copy(lineupStatus = LineupStatus.Error) }
+                    force && failed -> showToast(ToastMessage.RefreshFailed)
+                    force -> showToast(ToastMessage.Refreshed(channelRepository.channels.first().size))
+                }
+            }
         }
     }
 
@@ -459,5 +543,7 @@ class LiveViewModel @Inject constructor(
         const val DOUBLE_BACK_MS = 1_000L
         const val SKIP_SECONDS = 5
         const val LIST_PAGE = 8
+        /** Up to 5 digits: English (World) uses 10001 and up. */
+        const val MAX_DIGITS = 5
     }
 }

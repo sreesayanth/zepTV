@@ -1,0 +1,16 @@
+ZapTV
+Copyright 2026 The ZapTV Authors
+
+This product is licensed under the Apache License, Version 2.0 (see LICENSE).
+
+This product bundles the following third-party assets, each under its own licence:
+
+  Atkinson Hyperlegible font, SIL Open Font License 1.1
+    third_party/fonts/AtkinsonHyperlegible-OFL.txt
+
+  Barlow Semi Condensed font, SIL Open Font License 1.1
+    third_party/fonts/BarlowSemiCondensed-OFL.txt
+
+Third-party libraries used at build and run time (AndroidX, Media3, Kotlin,
+TDLib via tdl-coroutines, Room, Hilt, OkHttp, Coil and others) are distributed
+under their own licences, as listed in their published artifacts.

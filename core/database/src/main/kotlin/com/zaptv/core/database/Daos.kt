@@ -45,6 +45,13 @@ abstract class ChannelDao {
         channels.chunked(500).forEach { insertChannels(it) }
         sources.chunked(500).forEach { insertSources(it) }
     }
+
+    /** Removes a playlist's channels, e.g. when its language is turned off. */
+    @Transaction
+    open suspend fun deletePlaylist(playlistId: String) {
+        deleteSourcesFor(playlistId)
+        deleteChannelsFor(playlistId)
+    }
 }
 
 @Dao
@@ -54,6 +61,12 @@ interface PlaylistDao {
 
     @Query("SELECT * FROM playlists WHERE id = :id")
     suspend fun get(id: String): PlaylistEntity?
+
+    @Query("SELECT * FROM playlists")
+    suspend fun all(): List<PlaylistEntity>
+
+    @Query("DELETE FROM playlists WHERE id = :id")
+    suspend fun delete(id: String)
 }
 
 @Dao

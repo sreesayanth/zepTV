@@ -142,6 +142,7 @@ private fun LiveOverlays(state: LiveUiState) {
         when (val overlay = state.overlay) {
             is Overlay.ChannelList -> ChannelListOverlay(state, overlay)
             is Overlay.Options -> OptionsPanel(state, overlay, Modifier.align(Alignment.CenterEnd))
+            is Overlay.Languages -> LanguagesPanel(state, overlay, Modifier.align(Alignment.CenterEnd))
             is Overlay.Exit -> ExitDialog(overlay, Modifier.align(Alignment.Center))
             Overlay.None -> Unit
         }

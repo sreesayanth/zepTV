@@ -42,4 +42,5 @@ internal fun ChannelWithSources.toModel() = Channel(
     quality = channel.quality,
     labels = channel.labels.split('|').filter { it.isNotBlank() },
     sources = sources.sortedBy { it.priority }.map { StreamSource(it.url, it.userAgent, it.referrer, it.quality) },
+    playlistId = channel.playlistId,
 )

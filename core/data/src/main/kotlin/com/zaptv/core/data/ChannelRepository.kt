@@ -4,6 +4,7 @@ import com.zaptv.core.database.ChannelDao
 import com.zaptv.core.database.FavouriteDao
 import com.zaptv.core.database.FavouriteEntity
 import com.zaptv.core.model.Channel
+import com.zaptv.core.parser.LineupBuilder
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
@@ -15,9 +16,9 @@ class ChannelRepository @Inject constructor(
     private val channelDao: ChannelDao,
     private val favouriteDao: FavouriteDao,
 ) {
-    /** All channels, ordered by channel number. */
+    /** All channels from every loaded playlist, ordered by number, each channel only once. */
     val channels: Flow<List<Channel>> =
-        channelDao.observeLineup().map { rows -> rows.map { it.toModel() } }.distinctUntilChanged()
+        channelDao.observeLineup().map { rows -> LineupBuilder.combine(rows.map { it.toModel() }) }.distinctUntilChanged()
 
     val favourites: Flow<Set<String>> =
         favouriteDao.observeKeys().map { it.toSet() }.distinctUntilChanged()

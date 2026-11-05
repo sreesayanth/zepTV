@@ -3,6 +3,7 @@ package com.zaptv.core.data
 import com.zaptv.core.database.ChannelDao
 import com.zaptv.core.database.PlaylistDao
 import com.zaptv.core.database.PlaylistEntity
+import com.zaptv.core.model.PlaylistPreset
 import com.zaptv.core.parser.LineupBuilder
 import com.zaptv.core.parser.M3uParser
 import kotlinx.coroutines.Dispatchers
@@ -12,17 +13,6 @@ import okhttp3.Request
 import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
-
-/** A channel list the app knows about out of the box. Only URLs are stored, never stream links. */
-data class PlaylistPreset(val id: String, val name: String, val url: String)
-
-object PlaylistPresets {
-    val Malayalam = PlaylistPreset("iptv-org-mal", "Malayalam", "https://iptv-org.github.io/iptv/languages/mal.m3u")
-    val India = PlaylistPreset("iptv-org-in", "All of India", "https://iptv-org.github.io/iptv/countries/in.m3u")
-    val WorldNews = PlaylistPreset("iptv-org-news", "World news", "https://iptv-org.github.io/iptv/categories/news.m3u")
-
-    val Default = Malayalam
-}
 
 @Singleton
 class PlaylistRepository @Inject constructor(
@@ -46,10 +36,11 @@ class PlaylistRepository @Inject constructor(
                 if (!response.isSuccessful) throw IOException("HTTP ${response.code} for ${preset.url}")
                 response.body.charStream().use { M3uParser.parse(it) }
             }
-            if (playlist.entries.isEmpty()) throw IOException("The channel list is empty")
+            val entries = playlist.entries.filter { preset.country == null || it.countryCode == preset.country }
+            if (entries.isEmpty()) throw IOException("The channel list is empty")
 
             val previous = channelDao.numbersFor(preset.id).associate { it.key to it.number }
-            val lineup = LineupBuilder.build(preset.id, playlist.entries, previous)
+            val lineup = LineupBuilder.build(preset.id, entries, previous, preset.numberBase, preset.capacity)
             channelDao.replacePlaylist(
                 playlistId = preset.id,
                 channels = lineup.map { it.toEntity(preset.id) },
@@ -61,6 +52,18 @@ class PlaylistRepository @Inject constructor(
             lineup.size
         }
     }
+
+    /** Removes a playlist and its channels. */
+    suspend fun remove(playlistId: String) {
+        channelDao.deletePlaylist(playlistId)
+        playlistDao.delete(playlistId)
+    }
+
+    /** Ids of the playlists that are stored on the device. */
+    suspend fun storedIds(): Set<String> = playlistDao.all().map { it.id }.toSet()
+
+    /** Channel count per stored playlist, before duplicates across playlists are removed. */
+    suspend fun channelCounts(): Map<String, Int> = playlistDao.all().associate { it.id to it.channelCount }
 
     companion object {
         const val USER_AGENT = "ZapTV/0.1 (Android TV)"
