@@ -1,6 +1,6 @@
 # ZapTV — UI/UX Design Spec
 
-> Interactive prototype: https://claude.ai/artifact/YcSQEcWAgW4XuKwzGiDedy (local copy: `design/zaptv-prototype.html`)
+> Interactive prototype: [`design/zaptv-prototype.html`](../design/zaptv-prototype.html) (open it in a browser).
 > All sizes are **Android TV dp**. A 1080p TV is **960 × 540 dp**. The same numbers go straight into Compose (`.dp` / `.sp`).
 
 ---
@@ -201,7 +201,7 @@ shape = ClickableSurfaceDefaults.shape(RoundedCornerShape(10.dp)),
 
 ## 6. Movies & Series from Telegram (TV)
 
-> Design canvas: https://claude.ai/artifact/H3TkHfg3ctWRGNj1r4tuPT (TV row + phone row). Engineering plan: [TELEGRAM_PLAN.md](TELEGRAM_PLAN.md).
+> Engineering plan: [TELEGRAM_PLAN.md](TELEGRAM_PLAN.md).
 
 **Rule zero: live TV does not change.** The app still opens on the last channel; ▲▼ ◀ OK BACK keep their meanings. The library is one extra Options row, shown only when Settings › *Movies & Series* is On (default Off). Same tokens, fonts and focus style as §4; no new colours.
 
