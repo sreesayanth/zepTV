@@ -14,7 +14,7 @@
 |---|---|
 | **0. Setup** | ✅ Done. Multi-module Gradle project (AGP 9.4.1, Kotlin 2.4.21, Compose BOM 2026.09, tv-material 1.1.0, Media3 1.11.1, Room 2.8.5, Hilt 2.60.1), design tokens and fonts, TV banner and icons. Debug and release APKs build. |
 | **1. Player core** | ✅ Mostly done. Single warm ExoPlayer with fast-start buffering, source failover, M3U parser (13 unit tests), cable numbering, live screen, banner, ▲/▼ zapping with debounce, number entry, recall, autoplay last channel, unavailable countdown. Not yet tried on a real TV. |
-| **2. Lineup + browsing** | 🟡 Started. Channel list with groups and favourites, Options panel and daily refresh are done. Still to do: multiple playlists, hide/reorder, custom numbers. |
+| **2. Lineup + browsing** | 🟡 Started. Channel list with groups and favourites, Options panel and daily refresh are done. **Multiple languages** done (Nov 2026): 11 built-in iptv-org lists, each in its own number block, chosen in Options → Languages, duplicates shown once. Still to do: custom M3U URLs, hide/reorder, custom numbers. |
 | 3–6 | Not started. Next: preloading neighbour channels, network-loss recovery, EPG. |
 
 UI/UX spec: [UI_UX_DESIGN.md](UI_UX_DESIGN.md). Build and install steps: [README.md](../README.md).
@@ -256,6 +256,24 @@ Compose keys: `Key.DirectionUp`, `Key.ChannelUp`, `Key.Zero..Key.Nine`, `Key.Num
 | 700+ | Other languages / user playlists |
 
 Numbers stay **stable** across playlist refreshes (matched by `tvg-id`, then name), just like real cable. Users can renumber.
+
+**Languages (built).** Each language list gets its own block of 1,000 numbers and repeats the pattern above inside it, so turning languages on and off never renumbers anything:
+
+| Numbers | Language | On by default |
+|---|---|---|
+| 1–999 | Malayalam | ✅ |
+| 1001–1999 | English (India) | ✅ |
+| 2001–2999 | Tamil | ✅ |
+| 3001–3999 | Hindi | ✅ |
+| 4001–4999 | Telugu | |
+| 5001–5999 | Kannada | |
+| 6001–6999 | Bengali | |
+| 7001–7999 | Marathi | |
+| 8001–8999 | Gujarati | |
+| 9001–9999 | Punjabi | |
+| 10001–19999 | English (World), about 3,000 channels | |
+
+So Tamil News starts at 2101 and Hindi Devotional at 3501. A full category block (Hindi has more than 99 news channels) continues at x900+. "English (India)" is the iptv-org English list filtered to Indian channels (tvg-id ending in `.in`). A channel that is in several lists (e.g. DD National) appears once, in the lowest-numbered language. The catalogue lives in `core/model/.../PlaylistPreset.kt`; never reorder it or reuse an id, because that would renumber channels.
 
 ### 5.5 First-run onboarding (3 screens max)
 1. Language of the app (English / മലയാളം).

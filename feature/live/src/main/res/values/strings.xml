@@ -56,10 +56,22 @@
     <string name="option_stats">Stats for nerds</string>
     <string name="on">On</string>
     <string name="off">Off</string>
+    <string name="option_languages">Languages</string>
+    <string name="languages_on_count">%1$d on</string>
     <string name="option_reload">Update channel list</string>
     <string name="move">Move</string>
     <string name="select">Select</string>
     <string name="close">Close</string>
+
+    <!-- Languages -->
+    <string name="languages_subtitle">Each language has its own channel numbers</string>
+    <string name="language_on_from">On · %1$d+</string>
+    <string name="language_loading">Loading…</string>
+    <string name="language_toggle">On / off</string>
+    <string name="back">Back</string>
+    <string name="language_added">%1$s added · %2$d channels</string>
+    <string name="language_failed">Couldn’t load %1$s. Check the internet connection and try again.</string>
+    <string name="keep_one_language">Keep at least one language on</string>
 
     <!-- Exit -->
     <string name="exit_question">Exit ZapTV?</string>

@@ -55,6 +55,7 @@ import com.zaptv.core.designsystem.ZapType
 import com.zaptv.core.designsystem.zapFocus
 import com.zaptv.core.designsystem.zapPanel
 import com.zaptv.core.model.Channel
+import com.zaptv.core.model.PlaylistPresets
 import com.zaptv.core.player.PlaybackState
 
 // ------------------------------------------------------------------ banner
@@ -155,6 +156,7 @@ internal fun groupLabel(group: ChannelGroup): String = when (group) {
     ChannelGroup.Favourites -> stringResource(R.string.group_favourites)
     ChannelGroup.All -> stringResource(R.string.group_all)
     is ChannelGroup.OfCategory -> group.category.label
+    is ChannelGroup.OfPlaylist -> PlaylistPresets.byId(group.playlistId)?.name ?: group.playlistId
 }
 
 // ------------------------------------------------------------------ loading and failure
@@ -222,7 +224,8 @@ internal fun NumberEntry(digits: String, channels: List<Channel>, modifier: Modi
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            repeat(3) { i ->
+            // 3 boxes is enough for Malayalam (1–999); other languages use 4 (Tamil 2101), English (World) 5.
+            repeat(maxOf(3, digits.length)) { i ->
                 val d = digits.getOrNull(i)
                 Box(
                     Modifier.size(width = 38.dp, height = 56.dp).clip(RoundedCornerShape(6.dp)).background(Color.Black.copy(alpha = 0.4f)),
@@ -279,6 +282,9 @@ private fun toastText(message: ToastMessage): String = when (message) {
     is ToastMessage.NoChannel -> stringResource(R.string.no_channel, message.digits)
     is ToastMessage.Refreshed -> stringResource(R.string.refreshed, message.count)
     ToastMessage.RefreshFailed -> stringResource(R.string.refresh_failed)
+    is ToastMessage.LanguageAdded -> stringResource(R.string.language_added, message.name, message.count)
+    is ToastMessage.LanguageFailed -> stringResource(R.string.language_failed, message.name)
+    ToastMessage.KeepOneLanguage -> stringResource(R.string.keep_one_language)
 }
 
 @Composable
@@ -327,13 +333,23 @@ internal fun ChannelListOverlay(state: LiveUiState, overlay: Overlay.ChannelList
                     color = ZapColors.Mist,
                     modifier = Modifier.padding(start = 10.dp, top = 6.dp, bottom = 8.dp),
                 )
-                groups.forEachIndexed { index, g ->
-                    GroupRow(
-                        label = groupLabel(g),
-                        count = state.channelsIn(g).size,
-                        focused = overlay.onGroups && index == groupIndex,
-                        selected = !overlay.onGroups && index == groupIndex,
-                    )
+                // With several languages there are more groups than fit on screen, so the column scrolls.
+                val groupListState = rememberLazyListState()
+                LaunchedEffect(groupIndex) { groupListState.scrollToItem((groupIndex - 4).coerceAtLeast(0)) }
+                LazyColumn(
+                    state = groupListState,
+                    userScrollEnabled = false,
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    itemsIndexed(groups) { index, g ->
+                        GroupRow(
+                            label = groupLabel(g),
+                            count = state.channelsIn(g).size,
+                            focused = overlay.onGroups && index == groupIndex,
+                            selected = !overlay.onGroups && index == groupIndex,
+                        )
+                    }
                 }
             }
             Box(Modifier.width(1.dp).fillMaxHeight().background(ZapColors.Line))
@@ -526,6 +542,8 @@ internal fun OptionsPanel(state: LiveUiState, overlay: Overlay.Options, modifier
                         stringResource(if (state.upIsNextChannel) R.string.up_next else R.string.up_previous)
                     OptionItem.Stats -> stringResource(R.string.option_stats) to
                         stringResource(if (state.statsVisible) R.string.on else R.string.off)
+                    OptionItem.Languages -> stringResource(R.string.option_languages) to
+                        stringResource(R.string.languages_on_count, state.enabledPlaylists.count { PlaylistPresets.byId(it) != null })
                     OptionItem.Reload -> stringResource(R.string.option_reload) to null
                 }
                 OptionRow(label, value, focused = index == overlay.focusedIndex)
@@ -538,6 +556,51 @@ internal fun OptionsPanel(state: LiveUiState, overlay: Overlay.Options, modifier
             KeyHint(listOf("▲", "▼"), stringResource(R.string.move))
             KeyHint(listOf("OK"), stringResource(R.string.select))
             KeyHint(listOf("BACK"), stringResource(R.string.close))
+        }
+    }
+}
+
+// ------------------------------------------------------------------ languages
+
+@Composable
+internal fun LanguagesPanel(state: LiveUiState, overlay: Overlay.Languages, modifier: Modifier = Modifier) {
+    val presets = PlaylistPresets.all
+    val focused = overlay.focusedIndex.coerceIn(0, presets.lastIndex)
+    Column(
+        modifier
+            .fillMaxHeight()
+            .width(380.dp)
+            .background(Brush.horizontalGradient(0f to ZapColors.Solid.copy(alpha = 0.9f), 0.3f to ZapColors.Solid))
+            .padding(start = 22.dp, end = 40.dp, top = ZapSpacing.SafeVertical, bottom = 24.dp),
+    ) {
+        Text(stringResource(R.string.option_languages), style = ZapType.RowTitle.copy(fontSize = 17.sp), color = ZapColors.KasavuWhite)
+        Text(stringResource(R.string.languages_subtitle), style = ZapType.Meta, color = ZapColors.Mist)
+        Spacer(Modifier.height(12.dp))
+        val listState = rememberLazyListState()
+        LaunchedEffect(focused) { listState.scrollToItem((focused - 4).coerceAtLeast(0)) }
+        LazyColumn(
+            state = listState,
+            userScrollEnabled = false,
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(3.dp),
+        ) {
+            itemsIndexed(presets, key = { _, p -> p.id }) { index, preset ->
+                val label = if (preset.nativeName.isEmpty()) preset.name else "${preset.name} · ${preset.nativeName}"
+                val value = when {
+                    preset.id in state.loadingPlaylists -> stringResource(R.string.language_loading)
+                    preset.id in state.enabledPlaylists -> stringResource(R.string.language_on_from, preset.numberBase + 1)
+                    else -> stringResource(R.string.off)
+                }
+                OptionRow(label, value, focused = index == focused)
+            }
+        }
+        Row(
+            Modifier.fillMaxWidth().padding(top = 10.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            KeyHint(listOf("▲", "▼"), stringResource(R.string.move))
+            KeyHint(listOf("OK"), stringResource(R.string.language_toggle))
+            KeyHint(listOf("BACK"), stringResource(R.string.back))
         }
     }
 }

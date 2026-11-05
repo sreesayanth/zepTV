@@ -19,7 +19,7 @@ Switch it on and a channel is already playing. Press ▲/▼ and the next one st
 
 ---
 
-ZapTV is a **player**, not a content service. It ships with no channels of its own. It loads public M3U playlists by URL. The default is the community-maintained [iptv-org](https://github.com/iptv-org/iptv) Malayalam list, and you can add any playlist you have the right to watch.
+ZapTV is a **player**, not a content service. It ships with no channels of its own. It loads the community-maintained [iptv-org](https://github.com/iptv-org/iptv) playlists by URL: **Malayalam, English, Tamil and Hindi** are on by default, and Telugu, Kannada, Bengali, Marathi, Gujarati, Punjabi and worldwide English are one click away.
 
 Every screen works with a basic TV remote: no mouse, no touchscreen, no on-screen typing for everyday use.
 
@@ -36,8 +36,24 @@ Every screen works with a basic TV remote: no mouse, no touchscreen, no on-scree
 | **Channel list** | OK opens groups (Favourites, All, News, Entertainment…). Hold OK to add a favourite. |
 | **Options** | ▶ opens favourite, picture size, Up-button direction, stats for nerds, and update channel list. |
 | **Self-healing** | If a stream fails, the next source is tried automatically. If all fail, a clear message counts down to the next channel. |
+| **Many languages** | Malayalam, English, Tamil, Hindi, Telugu, Kannada, Bengali, Marathi, Gujarati, Punjabi and worldwide English. Turn each on or off in Options → Languages. Each language has its own numbers (see below), and a channel that is in several lists appears once. |
 | **Fresh lineup** | The channel list refreshes daily. Your numbers and favourites survive refreshes. |
 | **Private by design** | No accounts, no analytics, no tracking. Logs stay on the device. |
+
+### Channel numbers
+
+Each language has its own block of numbers, so turning languages on or off never renumbers anything:
+
+| Language | Numbers | On by default |
+|---|---|---|
+| Malayalam | 1–999 | ✅ |
+| English (India) | 1001–1999 | ✅ |
+| Tamil | 2001–2999 | ✅ |
+| Hindi | 3001–3999 | ✅ |
+| Telugu · Kannada · Bengali · Marathi · Gujarati · Punjabi | 4001+ · 5001+ · 6001+ · 7001+ · 8001+ · 9001+ | |
+| English (World), about 3,000 channels | 10001+ | |
+
+Inside each block, categories follow the same cable-style pattern: Entertainment from **x001**, News **x101**, Movies **x201**, Music **x301**, Kids **x401**, Devotional **x501**, Education **x601**, Sports **x701**. Type **2101** on the remote for the first Tamil news channel, or **101** for Malayalam news.
 
 ### Movies & Series from Telegram (in progress)
 

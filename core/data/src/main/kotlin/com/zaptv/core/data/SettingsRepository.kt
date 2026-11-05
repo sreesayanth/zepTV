@@ -7,6 +7,8 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.core.stringSetPreferencesKey
+import com.zaptv.core.model.PlaylistPresets
 import androidx.datastore.preferences.preferencesDataStore
 import com.zaptv.core.model.UserSettings
 import dagger.Module
@@ -34,6 +36,7 @@ class SettingsRepository @Inject constructor(
                 upIsNextChannel = p[UP_IS_NEXT] ?: true,
                 coachSeen = p[COACH_SEEN] ?: false,
                 statsVisible = p[STATS_VISIBLE] ?: false,
+                enabledPlaylists = p[ENABLED_PLAYLISTS] ?: PlaylistPresets.defaultIds,
             )
         }
         .distinctUntilChanged()
@@ -42,12 +45,14 @@ class SettingsRepository @Inject constructor(
     suspend fun setUpIsNextChannel(value: Boolean) { store.edit { it[UP_IS_NEXT] = value } }
     suspend fun setCoachSeen() { store.edit { it[COACH_SEEN] = true } }
     suspend fun setStatsVisible(value: Boolean) { store.edit { it[STATS_VISIBLE] = value } }
+    suspend fun setEnabledPlaylists(ids: Set<String>) { store.edit { it[ENABLED_PLAYLISTS] = ids } }
 
     private companion object {
         val LAST_CHANNEL = stringPreferencesKey("last_channel")
         val UP_IS_NEXT = booleanPreferencesKey("up_is_next")
         val COACH_SEEN = booleanPreferencesKey("coach_seen")
         val STATS_VISIBLE = booleanPreferencesKey("stats_visible")
+        val ENABLED_PLAYLISTS = stringSetPreferencesKey("enabled_playlists")
     }
 }
 

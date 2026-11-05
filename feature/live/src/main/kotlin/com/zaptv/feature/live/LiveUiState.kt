@@ -2,6 +2,7 @@ package com.zaptv.feature.live
 
 import com.zaptv.core.model.Category
 import com.zaptv.core.model.Channel
+import com.zaptv.core.model.PlaylistPresets
 import com.zaptv.core.player.PlaybackState
 import com.zaptv.core.player.PlaybackStats
 
@@ -29,16 +30,20 @@ sealed interface ChannelGroup {
     data object Favourites : ChannelGroup
     data object All : ChannelGroup
     data class OfCategory(val category: Category) : ChannelGroup
+    /** All channels from one language's playlist. */
+    data class OfPlaylist(val playlistId: String) : ChannelGroup
 }
 
 enum class Aspect { Fit, Fill, Zoom }
 
-enum class OptionItem { Favourite, PictureSize, UpButton, Stats, Reload }
+enum class OptionItem { Favourite, PictureSize, UpButton, Stats, Languages, Reload }
 
 sealed interface Overlay {
     data object None : Overlay
     data class ChannelList(val groupIndex: Int, val focusedIndex: Int, val onGroups: Boolean) : Overlay
     data class Options(val focusedIndex: Int) : Overlay
+    /** Options → Languages: one row per [PlaylistPresets] entry, OK turns it on or off. */
+    data class Languages(val focusedIndex: Int) : Overlay
     data class Exit(val exitFocused: Boolean) : Overlay
 }
 
@@ -53,6 +58,9 @@ sealed interface ToastMessage {
     data class NoChannel(val digits: String) : ToastMessage
     data class Refreshed(val count: Int) : ToastMessage
     data object RefreshFailed : ToastMessage
+    data class LanguageAdded(val name: String, val count: Int) : ToastMessage
+    data class LanguageFailed(val name: String) : ToastMessage
+    data object KeepOneLanguage : ToastMessage
 }
 
 data class LiveUiState(
@@ -76,6 +84,9 @@ data class LiveUiState(
     val statsVisible: Boolean = false,
     val aspect: Aspect = Aspect.Fit,
     val exitRequested: Boolean = false,
+    val enabledPlaylists: Set<String> = PlaylistPresets.defaultIds,
+    /** Languages that are being downloaded right now. */
+    val loadingPlaylists: Set<String> = emptySet(),
 ) {
     val current: Channel? get() = channels.firstOrNull { it.key == currentKey }
     val bannerChannel: Channel? get() = channels.firstOrNull { it.key == (pendingKey ?: currentKey) }
@@ -86,14 +97,23 @@ data class LiveUiState(
     val isUnavailable: Boolean
         get() = (playback as? PlaybackState.Unavailable)?.channelKey == currentKey && currentKey != null
 
-    /** Groups for the channel list: Favourites, All, then each category that has channels. */
+    /**
+     * Groups for the channel list: Favourites, All, each language (when more than one is loaded),
+     * then each category that has channels.
+     */
     val groups: List<ChannelGroup>
-        get() = listOf(ChannelGroup.Favourites, ChannelGroup.All) +
-            channels.map { it.category }.distinct().sortedBy { it.ordinal }.map { ChannelGroup.OfCategory(it) }
+        get() {
+            val loaded = channels.mapTo(HashSet()) { it.playlistId }
+            val languages = PlaylistPresets.all.filter { it.id in loaded }.map { ChannelGroup.OfPlaylist(it.id) }
+            return listOf(ChannelGroup.Favourites, ChannelGroup.All) +
+                (if (languages.size > 1) languages else emptyList()) +
+                channels.map { it.category }.distinct().sortedBy { it.ordinal }.map { ChannelGroup.OfCategory(it) }
+        }
 
     fun channelsIn(group: ChannelGroup): List<Channel> = when (group) {
         ChannelGroup.All -> channels
         ChannelGroup.Favourites -> channels.filter { it.key in favourites }
         is ChannelGroup.OfCategory -> channels.filter { it.category == group.category }
+        is ChannelGroup.OfPlaylist -> channels.filter { it.playlistId == group.playlistId }
     }
 }

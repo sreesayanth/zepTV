@@ -65,13 +65,13 @@ Holding ▲/▼ repeats every ~170 ms after 450 ms, and the zap debounce takes c
 - Keeps its number (301). Card: logo, gold "Digital channel" pill, one sentence of context, OK Open in YouTube (deep link to the YouTube TV app).
 
 ### 3.6 Number entry
-- Top-right box: three digit cells 36 × 52 dp, 44 dp condensed gold digits, empty cells show "–".
+- Top-right box: three digit cells 36 × 52 dp (a 4th or 5th cell appears as you type, for numbers like 2101 or 10001), 44 dp condensed gold digits, empty cells show "–".
 - Under it: exact match name ("Manorama News"), or candidate numbers ("101, 102, 103…"), or "No channel 7".
 - Gold bar shrinks over 2 s, then tunes. OK tunes now. BACK clears.
 
 ### 3.7 Channel list (OK / ◀)
 - Left panel 560 dp over the video (video keeps playing on the right).
-- Column 1 (172 dp): GROUPS — Favourites, All channels, News, Entertainment, Music, Devotional, Education, each with a count. Selected group = gold text.
+- Column 1 (172 dp): GROUPS — Favourites, All channels, then each language when more than one is on (Malayalam, English (India), Tamil, Hindi…), then News, Entertainment, Music, Devotional, Education, each with a count. Selected group = gold text. The column scrolls to keep the focused group visible.
 - Column 2: group title + clock, 8 visible rows of 46 dp with ▲/▼ "more" markers. Row: number (17 dp, gold if playing) | logo 30 | name (15 dp bold) + now-title (13 dp muted) | ★ / playing bars | 2 dp progress line.
 - Bottom-right "peek" card 330 dp: focused channel's now programme, time, time left, description, next.
 - Footer: OK Watch · ◀ Groups · Hold OK Favourite. Empty favourites: "No favourites yet. Hold OK on any channel to add it here."
@@ -81,6 +81,7 @@ Holding ▲/▼ repeats every ~170 ms after 450 ms, and the zap debounce takes c
 - Right panel 340 dp. Header: logo 40 + "102 Asianet News" + "Options".
 - Items (38 dp): Add/Remove favourite · TV guide · Search · Audio ‹ Malayalam › · Subtitles · Picture size ‹ Fit / Fill / Zoom › · Sleep timer ‹ Off / 30 / 60 / 90 min › · Stats for nerds ‹ Off / On › · Programme info · Settings.
 - ◀ ▶ changes values in place; ◀ on an action row closes the panel.
+- **Languages ‹ 4 on ›** (built): OK opens the Languages panel (same 340–380 dp right panel). One row per language, "Tamil · தமிழ்" with the value **On · 2001+**, **Off** or **Loading…**. OK turns a language on (downloads its channels, toast "Tamil added · 101 channels") or off (its channels disappear). At least one stays on. BACK / ◀ returns to Options.
 
 ### 3.9 TV guide
 - Full screen (97% ink). Top 150 dp: details (pill "On now" red / "Later", title 26 dp, channel · time · "18 min left" / "Starts at 10:30 pm", 2-line description) + **mini live preview** 240 × 135 dp of the channel being watched.

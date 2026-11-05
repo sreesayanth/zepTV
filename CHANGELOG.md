@@ -6,6 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ## Unreleased
 
 ### Added
+- **More languages:** English (India), Tamil and Hindi are on by default next to Malayalam; Telugu, Kannada, Bengali, Marathi, Gujarati, Punjabi and English (World) can be turned on in the new **Options → Languages** panel.
+- Each language has its own channel numbers (Tamil 2001+, Hindi 3001+…), so numbers never change when languages are turned on or off. Existing Malayalam numbers are unchanged.
+- A channel that is in several language lists appears only once, in the lowest-numbered language.
+- Language groups in the channel list; the groups column now scrolls.
+- Number entry accepts up to 5 digits.
 - Apache-2.0 licence and open-source project files: contributing guide, code of conduct, security policy, issue and pull request templates, CI.
 - `core/telegram` (not yet connected to the app): Telegram sign-in by QR code or phone number, listing chats with videos, and streaming playback while downloading.
 - `MediaNameParser`: reads title, year, season/episode, quality, codec, HDR, source, languages and split parts from video file names.
