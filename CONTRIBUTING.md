@@ -63,8 +63,14 @@ ZapTV is licensed under [Apache-2.0](LICENSE). By submitting a contribution you 
 
 ## Releasing (maintainers)
 
-1. Update `versionCode` and `versionName` in `app/build.gradle.kts`, and move the *Unreleased* notes in `CHANGELOG.md` under the new version.
-2. Commit, then tag and push: `git tag v1.0.0 && git push origin v1.0.0`.
-3. The [Release workflow](.github/workflows/release.yml) runs the tests, builds the APK and attaches `ZapTV-v1.0.0.apk` to a GitHub Release.
+The [Release workflow](.github/workflows/release.yml) publishes APKs on GitHub Releases:
 
-To sign releases with a real key, add the `ZAPTV_KEYSTORE_BASE64`, `ZAPTV_KEYSTORE_PASSWORD`, `ZAPTV_KEY_ALIAS` and `ZAPTV_KEY_PASSWORD` repository secrets (see the comments at the top of the workflow). Keep a backup of the keystore: without it, installed copies can't be updated without uninstalling first. Locally, export the same variables with `ZAPTV_KEYSTORE_FILE` pointing at the keystore.
+- **Every push to `main`** rebuilds the *Latest build* pre-release (tag `latest-build`, file `ZapTV-latest.apk`).
+- **A version tag** creates a stable release:
+  1. Update `versionName` in `app/build.gradle.kts` and move the *Unreleased* notes in `CHANGELOG.md` under the new version.
+  2. Commit, then `git tag v1.0.0 && git push origin v1.0.0`.
+  3. The workflow attaches `ZapTV-v1.0.0.apk` and `ZapTV.apk` to the release.
+
+`versionCode` comes from the workflow's run number, so every published APK installs over the previous one.
+
+Android only accepts an update signed with the same key. Add the `ZAPTV_KEYSTORE_BASE64`, `ZAPTV_KEYSTORE_PASSWORD`, `ZAPTV_KEY_ALIAS` and `ZAPTV_KEY_PASSWORD` repository secrets (see the comments at the top of the workflow) so every build uses your release key. Keep a backup of the keystore and its passwords: without them, installed copies can't be updated without uninstalling first. Locally, export the same variables with `ZAPTV_KEYSTORE_FILE` pointing at the keystore.

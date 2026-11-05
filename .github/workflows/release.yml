@@ -1,22 +1,32 @@
 name: Release
 
-# Push a tag like v1.0.0 to build a release APK and attach it to a GitHub Release.
+# Builds the APK and publishes it on GitHub Releases.
 #
-# For a properly signed APK, add these repository secrets
-# (Settings → Secrets and variables → Actions):
+# - Every push to main updates the "Latest build" pre-release (tag latest-build).
+#   Stable download link: https://github.com/sreesayanth/zepTV/releases/download/latest-build/ZapTV-latest.apk
+# - Pushing a tag like v1.0.0 creates a versioned release.
+#   Stable download link: https://github.com/sreesayanth/zepTV/releases/latest/download/ZapTV.apk
+#
+# Android only installs an update over an APK signed with the same key, so add these repository
+# secrets (Settings → Secrets and variables → Actions) to sign every build with your release key:
 #   ZAPTV_KEYSTORE_BASE64   the release keystore, base64-encoded (base64 -w0 release.jks)
 #   ZAPTV_KEYSTORE_PASSWORD
 #   ZAPTV_KEY_ALIAS
 #   ZAPTV_KEY_PASSWORD
-# Without them the APK is signed with a throwaway debug key and the release is
-# marked as a pre-release.
+# Without them each build is signed with a throwaway debug key, and every update needs an uninstall first.
 
 on:
   push:
+    branches: [main]
     tags: ["v*"]
+  workflow_dispatch:
 
 permissions:
   contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   release:
@@ -32,11 +42,23 @@ jobs:
 
       - uses: android-actions/setup-android@v3
         with:
-          # The default also asks for the retired "tools" package, which the
-          # runner's current SDK command-line tools no longer have.
           packages: platform-tools
 
       - uses: gradle/actions/setup-gradle@v4
+
+      - name: Work out the version
+        id: version
+        run: |
+          base=$(sed -n 's/.*?: "\([0-9][^"]*\)".*/\1/p' app/build.gradle.kts | head -1)
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            echo "name=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+            echo "kind=stable" >> "$GITHUB_OUTPUT"
+          else
+            echo "name=${base}-build.${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"
+            echo "kind=latest" >> "$GITHUB_OUTPUT"
+          fi
+          # Always increases, so each APK installs over the one before. +1 keeps it above local builds (1).
+          echo "code=$((GITHUB_RUN_NUMBER + 1))" >> "$GITHUB_OUTPUT"
 
       - name: Restore release keystore
         id: keystore
@@ -48,28 +70,60 @@ jobs:
             echo "file=$RUNNER_TEMP/release.jks" >> "$GITHUB_OUTPUT"
             echo "signed=true" >> "$GITHUB_OUTPUT"
           else
-            echo "No release keystore secret; using the debug key."
+            echo "::warning::No release keystore secret: this APK is signed with a throwaway key."
             echo "signed=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Test and build release APK
         env:
+          ZAPTV_VERSION_CODE: ${{ steps.version.outputs.code }}
+          ZAPTV_VERSION_NAME: ${{ steps.version.outputs.name }}
           ZAPTV_KEYSTORE_FILE: ${{ steps.keystore.outputs.file }}
           ZAPTV_KEYSTORE_PASSWORD: ${{ secrets.ZAPTV_KEYSTORE_PASSWORD }}
           ZAPTV_KEY_ALIAS: ${{ secrets.ZAPTV_KEY_ALIAS }}
           ZAPTV_KEY_PASSWORD: ${{ secrets.ZAPTV_KEY_PASSWORD }}
         run: ./gradlew test assembleRelease --stacktrace
 
-      - name: Rename APK
+      - name: Write release notes
+        env:
+          NAME: ${{ steps.version.outputs.name }}
+          SIGNED: ${{ steps.keystore.outputs.signed }}
+        run: |
+          {
+            echo "**ZapTV $NAME** for Android TV / Google TV."
+            echo
+            echo "Install: open the APK link in the **Downloader** app on the TV, or run \`adb install -r <apk>\`."
+            if [ "$SIGNED" != "true" ]; then
+              echo
+              echo "> ⚠️ Signed with a temporary key: uninstall the previous ZapTV before installing this one."
+            fi
+            echo
+            echo "Built from $GITHUB_SHA."
+          } > "$RUNNER_TEMP/notes.md"
+
+      - name: Publish latest build
+        if: steps.version.outputs.kind == 'latest'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NAME: ${{ steps.version.outputs.name }}
         run: |
           mkdir -p dist
-          cp app/build/outputs/apk/release/*.apk "dist/ZapTV-${GITHUB_REF_NAME}.apk"
+          cp app/build/outputs/apk/release/*.apk dist/ZapTV-latest.apk
+          gh release delete latest-build --cleanup-tag --yes || true
+          gh release create latest-build dist/ZapTV-latest.apk \
+            --target "$GITHUB_SHA" --prerelease \
+            --title "Latest build ($NAME)" --notes-file "$RUNNER_TEMP/notes.md"
 
-      - name: Create GitHub Release
+      - name: Publish versioned release
+        if: steps.version.outputs.kind == 'stable'
         env:
           GH_TOKEN: ${{ github.token }}
           SIGNED: ${{ steps.keystore.outputs.signed }}
         run: |
-          flags="--generate-notes"
-          if [ "$SIGNED" != "true" ]; then flags="$flags --prerelease"; fi
-          gh release create "$GITHUB_REF_NAME" dist/*.apk --title "ZapTV $GITHUB_REF_NAME" $flags
+          mkdir -p dist
+          cp app/build/outputs/apk/release/*.apk "dist/ZapTV-${GITHUB_REF_NAME}.apk"
+          cp app/build/outputs/apk/release/*.apk dist/ZapTV.apk
+          flags=""
+          if [ "$SIGNED" != "true" ]; then flags="--prerelease"; fi
+          gh release create "$GITHUB_REF_NAME" dist/*.apk --title "ZapTV $GITHUB_REF_NAME" \
+            --notes-file "$RUNNER_TEMP/notes.md" --generate-notes $flags

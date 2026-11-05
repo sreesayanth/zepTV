@@ -68,7 +68,18 @@ Status and design: [docs/TELEGRAM_PLAN.md](docs/TELEGRAM_PLAN.md).
 
 ## Install on your TV
 
-> Pre-built APKs will be attached to [GitHub Releases](https://github.com/sreesayanth/zeptv/releases) starting with v1.0. Until then, [build from source](#build-from-source).
+### Download
+
+GitHub Actions builds the APK and publishes it on [GitHub Releases](https://github.com/sreesayanth/zepTV/releases):
+
+| Build | When it's updated | Direct link (works in the TV's Downloader app) |
+|---|---|---|
+| **Latest build** | Every change merged to `main` | `https://github.com/sreesayanth/zepTV/releases/download/latest-build/ZapTV-latest.apk` |
+| **Stable release** | Each version tag (v1.0.0…) | `https://github.com/sreesayanth/zepTV/releases/latest/download/ZapTV.apk` |
+
+Tip: shorten the link with any URL shortener so it's quick to type with the remote.
+
+### Install
 
 1. On the TV, open **Settings → System → About** and click **Android TV OS build** 7 times to turn on Developer options.
 2. In **Settings → System → Developer options**, turn on **USB debugging** (and **Network debugging** if it's there).
@@ -76,12 +87,12 @@ Status and design: [docs/TELEGRAM_PLAN.md](docs/TELEGRAM_PLAN.md).
 4. From your computer:
    ```bash
    adb connect <tv-ip>:5555
-   adb install -r app/build/outputs/apk/debug/app-debug.apk
+   adb install -r ZapTV-latest.apk      # or app/build/outputs/apk/debug/app-debug.apk if you built it
    ```
    Accept the prompt on the TV the first time.
 5. ZapTV appears in the TV's app row. Pin it to your favourites.
 
-**Without a computer:** put the APK online and install it with the free **Downloader** app on the TV.
+**Without a computer:** install the free **Downloader** app on the TV, allow it to install unknown apps, and open one of the download links above.
 
 **Fire TV:** works the same on Fire OS devices. Newer Fire TV devices running Vega OS don't run Android apps.
 

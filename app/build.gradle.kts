@@ -13,8 +13,9 @@ android {
         applicationId = "com.zaptv.tv"
         minSdk = 24
         targetSdk = 36
-        versionCode = 1
-        versionName = "0.1.0"
+        // The release workflow sets these so every published APK installs over the previous one.
+        versionCode = System.getenv("ZAPTV_VERSION_CODE")?.toIntOrNull() ?: 1
+        versionName = System.getenv("ZAPTV_VERSION_NAME") ?: "0.1.0"
     }
 
     // Release signing comes from environment variables (set by the release workflow from
