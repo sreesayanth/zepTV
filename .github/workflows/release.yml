@@ -31,6 +31,10 @@ jobs:
           java-version: 21
 
       - uses: android-actions/setup-android@v3
+        with:
+          # The default also asks for the retired "tools" package, which the
+          # runner's current SDK command-line tools no longer have.
+          packages: platform-tools
 
       - uses: gradle/actions/setup-gradle@v4
 
